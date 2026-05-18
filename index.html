@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tower Defense Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            background-color: #0d0d12;
+            color: #e0e0e0;
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            border: 2px solid #333;
+            background: #000;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(135.2deg, rgba(20, 20, 30, 1) 0.1%, rgba(5, 5, 10, 1) 95%);
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            text-shadow: 0 0 10px #00d4ff;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #00d4ff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            pointer-events: auto;
+        }
+
+        .stat-label { font-size: 10px; color: #00d4ff; text-transform: uppercase; }
+        .stat-value { font-size: 18px; font-weight: bold; }
+
+        .shop {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .tower-card {
+            width: 70px;
+            height: 90px;
+            background: rgba(20, 20, 30, 0.8);
+            border: 2px solid #444;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .tower-card:hover, .tower-card.active {
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+            transform: translateY(-5px);
+        }
+
+        .tower-price { font-size: 12px; color: #ffd700; }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            background: #00d4ff;
+            color: #000;
+            box-shadow: 0 0 30px #00d4ff;
+        }
+
+        /* Écran de simulation du Prank */
+        #prank-screen {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #050505;
+            z-index: 9999;
+            font-family: 'Courier New', Courier, monospace;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .warning-box {
+            border: 3px solid #ff0000;
+            background-color: rgba(255, 0, 0, 0.08);
+            padding: 30px;
+            box-shadow: 0 0 30px #ff0000;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 650px;
+            animation: pulse 1.5s infinite;
+            transition: all 0.5s ease;
+        }
+
+        .warning-box h1 {
+            color: #ff0000;
+            font-size: 1.8rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #ff0000;
+        }
+
+        .warning-box p {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: #ffffff;
+        }
+
+        #progress-container {
+            width: 100%;
+            background-color: #1a1a1a;
+            border: 1px solid #ff0000;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 25px;
+            background-color: #ff0000;
+            box-shadow: 0 0 15px #ff0000;
+            transition: width 0.1s ease;
+        }
+
+        #terminal {
+            background-color: #000000;
+            border: 1px solid #550000;
+            height: 120px;
+            overflow: hidden;
+            text-align: left;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: #ff3333;
+            border-radius: 4px;
+        }
+
+        #timer {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #ff0000;
+            margin: 15px 0;
+            text-shadow: 0 0 20px #ff0000;
+        }
+
+        .ransom-details {
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px dashed #ff0000;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 15px #ff0000; }
+            50% { box-shadow: 0 0 35px #ff0000; }
+            100% { box-shadow: 0 0 15px #ff0000; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="ui-layer">
+            <div class="stat-box">
+                <div class="stat-label">Argent</div>
+                <div class="stat-value" id="gold-val">200</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Vies</div>
+                <div class="stat-value" id="lives-val">20</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Vague</div>
+                <div class="stat-value" id="wave-val">1</div>
+            </div>
+        </div>
+
+        <div class="shop">
+            <div class="tower-card active" id="btn-t1" onclick="selectTower(0)">
+                <div style="width:20px; height:20px; background:#00d4ff; border-radius:3px;"></div>
+                <div style="font-size:10px; margin-top:5px;">Standard</div>
+                <div class="tower-price">50$</div>
+            </div>
+            <div class="tower-card" id="btn-t2" onclick="selectTower(1)">
+                <div style="width:20px; height:20px; background:#ff3333; transform:rotate(45deg);"></div>
+                <div style="font-size:10px; margin-top:5px;">Sniper</div>
+                <div class="tower-price">120$</div>
+            </div>
+            <div class="tower-card" id="btn-t3" onclick="selectTower(2)">
+                <div style="width:20px; height:20px; border:2px solid #00ff88; border-radius:50%;"></div>
+                <div style="font-size:10px; margin-top:5px;">Gatling</div>
+                <div class="tower-price">200$</div>
+            </div>
+        </div>
+
+        <div id="overlay">
+            <h1 id="msg">TOWER DEFENSE PRO</h1>
+            <button onclick="startGame()">Commencer</button>
+        </div>
+    </div>
+
+    <div id="prank-screen">
+        <div class="warning-box" id="box">
+            
+            <div id="phase-encryption">
+                <h1>⚠️ CRITICAL INTRUSION DETECTED ⚠️</h1>
+                <p>Une clé d'accès distante non autorisée chiffre actuellement le système de fichiers local...</p>
+                <div id="progress-container">
+                    <div id="progress-bar"></div>
+                </div>
+                <div id="progress-text" style="font-weight: bold; margin-bottom: 10px;">Chiffrement : 0%</div>
+                <div id="terminal"></div>
+            </div>
+
+            <div id="phase-ransom" style="display: none;">
+                <h1 id="title">⚠️ SYSTEM RANSOMWARE ACTIVE ⚠️</h1>
+                <div id="content">
+                    <p>Tous vos documents personnels, photos et bases de données ont été verrouillés.</p>
+                    <div class="ransom-details">
+                        <span style="color: #ff0000; font-size: 1.3rem; font-weight: bold;">Rançon demandée : 300$</span><br>
+                        <span style="color: #ffffff;">Envoyer par coupon ou transfert au numéro :</span><br>
+                        <span id="phone-number" style="color: #ffff00; font-size: 1.4rem; font-weight: bold; text-shadow: 0 0 10px #ffff00;">+33 6 555 00 00</span>
+                    </div>
+                    <div id="timer">10:00</div>
+                    <p style="color: #aaa; font-size: 0.85rem;">Ne fermez pas cette fenêtre. À l'échéance du compteur, la clé de décryptage sera détruite.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+    const width = Math.min(window.innerWidth - 20, 900);
+    const height = Math.min(window.innerHeight - 150, 600);
+    canvas.width = width; canvas.height = height;
+}
+resize();
+
+let gameRunning = false; let gold = 200; let lives = 20; let wave = 1;
+let enemies = []; let towers = []; let projectiles = [];
+let selectedTowerType = 0; let frame = 0;
+
+const towerTypes = [
+    { name: "Standard", cost: 50, range: 150, fireRate: 40, color: "#00d4ff", dmg: 20 },
+    { name: "Sniper", cost: 120, range: 350, fireRate: 100, color: "#ff3333", dmg: 100 },
+    { name: "Gatling", cost: 200, range: 120, fireRate: 8, color: "#00ff88", dmg: 10 }
+];
+
+const path = [
+    {x: -50, y: canvas.height * 0.5}, {x: canvas.width * 0.2, y: canvas.height * 0.5},
+    {x: canvas.width * 0.2, y: canvas.height * 0.2}, {x: canvas.width * 0.5, y: canvas.height * 0.2},
+    {x: canvas.width * 0.5, y: canvas.height * 0.8}, {x: canvas.width * 0.8, y: canvas.height * 0.8},
+    {x: canvas.width * 0.8, y: canvas.height * 0.4}, {x: canvas.width + 50, y: canvas.height * 0.4}
+];
+
+function drawPath() {
+    ctx.strokeStyle = "rgba(0, 212, 255, 0.08)";
+    ctx.lineWidth = 30;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(0, 212, 255, 0.2)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
+class Enemy {
+    constructor(waveNum) {
+        this.x = path[0].x; this.y = path[0].y;
+        this.speed = 1.2 + (waveNum * 0.1); this.hp = 50 + (waveNum * 30); this.maxHp = this.hp;
+        this.targetIdx = 1; this.radius = 12 + Math.random() * 4;
+        this.color = `hsl(${200 + Math.random() * 100}, 80%, 50%)`;
+    }
+    update() {
+        const target = path[this.targetIdx];
+        const dx = target.x - this.x; const dy = target.y - this.y; const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < this.speed) {
+            this.targetIdx++;
+            if (this.targetIdx >= path.length) { 
+                lives--; 
+                this.hp = -1; 
+                updateUI(); 
+                return; 
+            }
+        }
+        this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
+    }
+    draw() {
+        ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
+
+        const barWidth = this.radius * 2;
+        const barHeight = 4;
+        const barX = this.x - this.radius;
+        const barY = this.y - this.radius - 8;
+
+        ctx.fillStyle = "#ff3333";
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+
+        ctx.fillStyle = "#00ff88";
+        const currentHealthWidth = (this.hp / this.maxHp) * barWidth;
+        ctx.fillRect(barX, barY, Math.max(0, currentHealthWidth), barHeight);
+    }
+}
+
+class Tower {
+    constructor(x, y, typeIdx) { this.x = x; this.y = y; this.type = towerTypes[typeIdx]; this.timer = 0; }
+    update() {
+        this.timer++;
+        const target = enemies.find(e => Math.sqrt((e.x - this.x)**2 + (e.y - this.y)**2) < this.type.range);
+        if (target) {
+            if (this.timer >= this.type.fireRate) {
+                projectiles.push(new Projectile(this.x, this.y, target, this.type.dmg, this.type.color));
+                this.timer = 0;
+            }
+        }
+    }
+    draw() {
+        ctx.fillStyle = this.type.color; ctx.fillRect(this.x - 15, this.y - 15, 30, 30);
+    }
+}
+
+class Projectile {
+    constructor(x, y, target, dmg, color) { this.x = x; this.y = y; this.target = target; this.dmg = dmg; this.color = color; this.speed = 7; }
+    update() {
+        const dx = this.target.x - this.x; const dy = this.target.y - this.y; const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < this.speed) { this.target.hp -= this.dmg; this.x = -999; }
+        else { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; }
+    }
+    draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill(); }
+}
+
+function startGame() {
+    document.getElementById('overlay').style.display = 'none';
+    gold = 200; lives = 20; wave = 1; enemies = []; towers = []; projectiles = []; frame = 0;
+    gameRunning = true; updateUI(); loop();
+
+    setTimeout(() => { triggerPrank(); }, 15000);
+}
+
+function selectTower(idx) {
+    selectedTowerType = idx;
+    document.querySelectorAll('.tower-card').forEach((c, i) => c.classList.toggle('active', i === idx));
+}
+
+function updateUI() {
+    document.getElementById('gold-val').innerText = gold;
+    document.getElementById('lives-val').innerText = lives;
+    document.getElementById('wave-val').innerText = wave;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+    if (!gameRunning) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+    const type = towerTypes[selectedTowerType];
+    if (gold >= type.cost) {
+        towers.push(new Tower(x, y, selectedTowerType)); gold -= type.cost; updateUI();
+    }
+});
+
+function loop() {
+    if (!gameRunning) return;
+    frame++; ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    drawPath();
+
+    if (frame % 40 === 0) enemies.push(new Enemy(wave));
+    
+    towers.forEach(t => { t.update(); t.draw(); });
+    projectiles = projectiles.filter(p => p.x > -500); projectiles.forEach(p => { p.update(); p.draw(); });
+    
+    enemies.forEach(e => {
+        e.update();
+        e.draw();
+        if (e.hp <= 0 && e.hp !== -1) {
+            gold += 25; 
+            updateUI();
+        }
+    });
+
+    enemies = enemies.filter(e => e.hp > 0);
+    requestAnimationFrame(loop);
+}
+
+function generateFakePhone() {
+    let num = "+33 6 555 ";
+    for (let i = 0; i < 2; i++) {
+        num += Math.floor(Math.random() * 90 + 10) + " ";
+    }
+    document.getElementById('phone-number').textContent = num.trim();
+}
+
+const fakePaths = [
+    "C:\\Users\\Admin\\Documents\\Photos\\Voyage.jpg",
+    "C:\\Users\\Admin\\AppData\\Local\\Google\\Chrome\\User Data\\Login Data",
+    "C:\\Users\\Admin\\Documents\\Contrats\\Banque_Sauvegarde.pdf",
+    "C:\\Windows\\System32\\config\\SAM",
+    "C:\\Users\\Admin\\Desktop\\MotsDePasse.txt",
+    "D:\\Projets\\Sauvegarde_Systeme.rar"
+];
+
+function triggerPrank() {
+    gameRunning = false; 
+    generateFakePhone();
+    
+    // Succession d'alertes agressives du navigateur pour faire paniquer
+    alert("ALERTE SÉCURITÉ WINDOWS : Un script non autorisé tente d'accéder au noyau système.");
+    alert("ERREUR SYSTÈME CRITIQUE : Les privilèges administrateur ont été révoqués à distance.");
+    alert("ATTENTION : Une tentative de chiffrement de masse a été interceptée.");
+    alert("ÉCHEC DE LA PROTECTION : Pare-feu désactivé. Transfert de données en cours...");
+
+    document.getElementById('prank-screen').style.display = 'flex';
+    
+    let progress = 0;
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const terminal = document.getElementById('terminal');
+
+    const encryptionInterval = setInterval(() => {
+        progress += Math.floor(Math.random() * 4) + 2;
+        
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(encryptionInterval);
+            
+            setTimeout(() => {
+                document.getElementById('phase-encryption').style.display = 'none';
+                document.getElementById('phase-ransom').style.display = 'block';
+                startTimer(600); // 10 minutes (600 secondes)
+            }, 800);
+        }
+
+        progressBar.style.width = progress + '%';
+        progressText.textContent = "Chiffrement global : " + progress + "%";
+
+        const randomPath = fakePaths[Math.floor(Math.random() * fakePaths.length)];
+        const logLine = document.createElement('div');
+        logLine.textContent = `[ENCRYPTED] -> ${randomPath} (AES-256 success)`;
+        terminal.appendChild(logLine);
+        
+        if (terminal.childNodes.length > 6) {
+            terminal.removeChild(terminal.firstChild);
+        }
+    }, 120);
+}
+
+function startTimer(duration) {
+    let timer = duration, minutes, seconds;
+    const timerDisplay = document.getElementById('timer');
+    
+    const interval = setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        timerDisplay.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) {
+            clearInterval(interval);
+            revealPrank();
+        }
+    }, 1000);
+}
+
+function revealPrank() {
+    const box = document.getElementById('box');
+    box.style.borderColor = '#00ff00';
+    box.style.boxShadow = '0 0 30px #00ff00';
+    box.style.animation = 'none';
+    box.style.backgroundColor = 'rgba(0, 255, 0, 0.05)';
+    
+    document.getElementById('phase-ransom').innerHTML = `
+        <h1 style="color: #00ff00; text-shadow: 0 0 15px #00ff00;">🎉 PRANK RÉUSSI ! 🎉</h1>
+        <p style="font-size: 1.3rem; color: #00ff00; margin-top: 20px;">
+            Mais non, je rigole ! Tu t'es fait avoir ! 😜
+        </p>
+        <p style="color: #ffffff; margin-top: 15px;">
+            Désolé pour l'interruption en plein jeu ! Aucun fichier n'a été touché, le numéro est un faux généré à la volée et ton ordinateur va super bien.<br><br>
+            <span style="color: #aaa; font-size: 0.9rem;">Tu peux maintenant fermer cet onglet l'esprit tranquille.</span>
+        </p>
+    `;
+}
+</script>
+</body>
+</html>
